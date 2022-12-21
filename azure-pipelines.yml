@@ -1,9 +1,19 @@
+name: zabbix-azure-pipeline
+
 # Get variables
 variables:
 - group: Send-parameters
 
 # Configure the pipeline
 trigger: none
+
+# this pipeline will be triggered by another pipeline
+resources:
+  pipelines:
+  - pipeline: deploy_worldcup2026countdown   # Name of the pipeline resource
+    source: azure-pipelines.yml # Name of the pipeline referenced by the pipeline resource
+    #project: Trigger-Pipeline-From-Another-Pipeline # Required only if the source pipeline is in another project
+    trigger: true # enable the trigger
 
 # Specify the agent pool
 pool:
