@@ -4,9 +4,6 @@ name: zabbix-azure-pipeline
 variables:
 - group: Send-parameters
 
-# Configure the pipeline
-trigger: none
-
 # this pipeline will be triggered by another pipeline
 resources:
   pipelines:
