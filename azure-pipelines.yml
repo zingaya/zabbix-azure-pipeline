@@ -7,7 +7,7 @@ variables:
 # this pipeline will be triggered by another pipeline
 resources:
   pipelines:
-  - pipeline: worldcup2026 # Name of the pipeline resource
+  - pipeline: zingaya.worldcup2026 # Name of the pipeline resource
     source: deploy_worldcup2026countdown # Name of the pipeline referenced by the pipeline resource
     #project: Trigger-Pipeline-From-Another-Pipeline # Required only if the source pipeline is in another project
     trigger: true # enable the trigger
