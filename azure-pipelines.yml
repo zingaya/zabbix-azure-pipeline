@@ -1,0 +1,27 @@
+# Get variables
+variables:
+- group: Send-parameters
+
+# Configure the pipeline
+trigger: none
+
+# Specify the agent pool
+pool:
+  name: debian
+
+# Define the pipeline steps
+jobs:    
+
+  - job: pipeline_status_to_zabbix
+    displayName: Send the pipeline status to Zabbix
+    dependsOn: 
+      - destroy_lxc
+      - swap_staging
+    steps:
+      - script: |
+          # Get the pipeline status
+          status = "$(Pipeline.Status)"
+
+          # Send the pipeline status to Zabbix using zabbix_sender
+          subprocess.run(["zabbix_sender", "--zabbix-server", "$(zabbixurl)", "--host", "World cup timer", "--key", "get.pipeline.trapper", "--value", status])
+    condition: always() 
