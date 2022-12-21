@@ -23,8 +23,5 @@ jobs:
     displayName: Send the pipeline build status to Zabbix
     steps:
       - script: |
-          # Get the pipeline status
-          status = "$(Pipeline.Status)"
-
           # Send the pipeline status to Zabbix using zabbix_sender
           zabbix_sender -z $(zabbixhost) -s '$(zabbixserver)' -k $(zabbixkey) -o "$(curl --header 'Authorization:Basic $(PAT)=' --get '$(pipelineurl)$top=1')"
