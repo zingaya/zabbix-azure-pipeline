@@ -1,0 +1,253 @@
+zabbix_export:
+  version: '6.2'
+  date: '2022-12-23T00:32:23Z'
+  template_groups:
+    -
+      uuid: 7df96b18c230490a9a0a9e2307226338
+      name: Templates
+  templates:
+    -
+      uuid: 66d2baa09f0b404db23e2cc73a25d034
+      template: 'Worldcup 2026 Countdown'
+      name: 'Worldcup 2026 Countdown'
+      description: 'A simple template to use with Azure Pipelines'
+      groups:
+        -
+          name: Templates
+      items:
+        -
+          uuid: 4ed0add518d748afab358e6c2f0e70fc
+          name: 'Worldcup2026 App JSON'
+          type: HTTP_AGENT
+          key: get.app.json
+          delay: 20s
+          history: '0'
+          trends: '0'
+          value_type: TEXT
+          timeout: 5s
+          url: 'http://{HOST.IP}:18080'
+        -
+          uuid: badb211f36f74baa9eece13fce53e920
+          name: 'All Azure Pipelines Status'
+          type: TRAP
+          key: pipeline.trapper
+          delay: '0'
+          history: '0'
+          trends: '0'
+          value_type: TEXT
+        -
+          uuid: 38a5a5cf99a34a6caa18727755a78d0d
+          name: 'App Version'
+          type: DEPENDENT
+          key: worldcup2026.app.ver
+          delay: '0'
+          history: 365d
+          trends: '0'
+          value_type: TEXT
+          preprocessing:
+            -
+              type: JSONPATH
+              parameters:
+                - $.app_ver
+              error_handler: DISCARD_VALUE
+            -
+              type: DISCARD_UNCHANGED
+              parameters:
+                - ''
+          master_item:
+            key: get.app.json
+          triggers:
+            -
+              uuid: 821214526dc0423bbc8f51cf951248c4
+              expression: 'last(/Worldcup 2026 Countdown/worldcup2026.app.ver,#1)<>last(/Worldcup 2026 Countdown/worldcup2026.app.ver,#2)'
+              recovery_mode: NONE
+              name: 'Web app version was modified'
+              opdata: 'New version: {ITEM.VALUE1} - Old Version {ITEM.VALUE2}'
+              priority: INFO
+              description: 'Close the problem manually to acknowledge the new version'
+              type: MULTIPLE
+              manual_close: 'YES'
+              tags:
+                -
+                  tag: scope
+                  value: notice
+        -
+          uuid: 3a69a2c399114d698f4889a27366c76b
+          name: 'Time left'
+          type: DEPENDENT
+          key: worldcup2026.timeleft
+          delay: '0'
+          history: 1d
+          trends: '0'
+          units: s
+          preprocessing:
+            -
+              type: JSONPATH
+              parameters:
+                - $.unix_time
+          master_item:
+            key: get.app.json
+          triggers:
+            -
+              uuid: 7f0e0d55810a4d409e5a6b7fab019e87
+              expression: 'nodata(/Worldcup 2026 Countdown/worldcup2026.timeleft,5m)=1'
+              name: 'Web app is not responding'
+              opdata: 'Last value: {ITEM.VALUE}'
+              priority: HIGH
+              description: |
+                Oh no! you can't know when is it time!
+                Check the app ASAP!!
+              tags:
+                -
+                  tag: scope
+                  value: webapp
+      discovery_rules:
+        -
+          uuid: 14655434634c42c5a70b55cb06ff583a
+          name: 'Pipelines discover'
+          type: HTTP_AGENT
+          key: discover.pipelines
+          delay: 10m
+          item_prototypes:
+            -
+              uuid: 286714600402425480f4205b2b5c480f
+              name: 'Pipeline ({#PIPELINE.NAME}) build number'
+              type: DEPENDENT
+              key: 'pipeline.buildnumber[{#PIPELINE.NAME}]'
+              delay: '0'
+              history: 365d
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$.value[?(@.definition.name=="{#PIPELINE.NAME}")].buildNumber.first()'
+                -
+                  type: DISCARD_UNCHANGED
+                  parameters:
+                    - ''
+              master_item:
+                key: pipeline.trapper
+            -
+              uuid: 350b31be620b4802b531de3dfa595e09
+              name: 'Pipeline ({#PIPELINE.NAME}) configuration'
+              type: HTTP_AGENT
+              key: 'pipeline.config[{#PIPELINE.NAME}]'
+              delay: 10m
+              history: 1d
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: DISCARD_UNCHANGED
+                  parameters:
+                    - ''
+              url: '{$ADO.PROJECT.URL}/_apis/pipelines/{#PIPELINE.ID}'
+              headers:
+                -
+                  name: Authorization
+                  value: 'Basic {$ADO.PAT}'
+                -
+                  name: Content-Type
+                  value: application/json
+              trigger_prototypes:
+                -
+                  uuid: a519a271305641d4bc50346ea882dcf1
+                  expression: |
+                    last(/Worldcup 2026 Countdown/pipeline.config[{#PIPELINE.NAME}],#1)<>
+                    last(/Worldcup 2026 Countdown/pipeline.config[{#PIPELINE.NAME}],#2)
+                  recovery_mode: NONE
+                  name: 'Pipeline ({#PIPELINE.NAME) configuration changed'
+                  priority: WARNING
+                  type: MULTIPLE
+                  manual_close: 'YES'
+                  tags:
+                    -
+                      tag: scope
+                      value: pipelines
+            -
+              uuid: 163f8f9250694affaa97d565edd78976
+              name: 'Pipeline ({#PIPELINE.NAME}) finish time'
+              type: DEPENDENT
+              key: 'pipeline.finishtime[{#PIPELINE.NAME}]'
+              delay: '0'
+              history: 365d
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$.value[?(@.definition.name=="{#PIPELINE.NAME}")].finishTime.first()'
+                -
+                  type: DISCARD_UNCHANGED
+                  parameters:
+                    - ''
+              master_item:
+                key: pipeline.trapper
+            -
+              uuid: 68a496b4954b420c81d3b050983be33b
+              name: 'Pipeline ({#PIPELINE.NAME}) result'
+              type: DEPENDENT
+              key: 'pipeline.result[{#PIPELINE.NAME}]'
+              delay: '0'
+              history: 365d
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$.value[?(@.definition.name=="{#PIPELINE.NAME}")].result.first()'
+                -
+                  type: DISCARD_UNCHANGED
+                  parameters:
+                    - ''
+              master_item:
+                key: pipeline.trapper
+          trigger_prototypes:
+            -
+              uuid: 5dfe2d471a1540e3844f493bfbc45f47
+              expression: |
+                last(/Worldcup 2026 Countdown/pipeline.result[{#PIPELINE.NAME}])<>"succeeded"
+                and
+                last(/Worldcup 2026 Countdown/pipeline.finishtime[{#PIPELINE.NAME}])<>""
+                and
+                last(/Worldcup 2026 Countdown/pipeline.buildnumber[{#PIPELINE.NAME}])<>""
+              name: 'Pipeline ({#PIPELINE.NAME) failed'
+              opdata: 'Status: {ITEM.VALUE1} - Finish time {ITEM.VALUE2} - BuildNumber: {ITEM.VALUE3}'
+              priority: HIGH
+              tags:
+                -
+                  tag: scope
+                  value: pipelines
+          url: '{$ADO.PROJECT.URL}/_apis/pipelines'
+          headers:
+            -
+              name: Authorization
+              value: 'Basic {$ADO.PAT}'
+            -
+              name: Content-Type
+              value: application/json
+          lld_macro_paths:
+            -
+              lld_macro: '{#PIPELINE.ID}'
+              path: $.id
+            -
+              lld_macro: '{#PIPELINE.NAME}'
+              path: $.name
+          preprocessing:
+            -
+              type: JSONPATH
+              parameters:
+                - $.value
+      macros:
+        -
+          macro: '{$ADO.PAT}'
+          type: SECRET_TEXT
+          description: 'Put your PAT to access the API. This should be base64 encoded.'
+        -
+          macro: '{$ADO.PROJECT.URL}'
+          value: CHANGE_THIS
+          description: 'Should be like: https://dev.azure.com/{organization}/{project}'
