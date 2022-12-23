@@ -34,3 +34,7 @@ It has 2 simple triggers:
 And at last, it has a set of 2 triggers that will create for each pipeline discovered.
 - If the configuration has changed
 - If the build has failed
+
+Take into account that there are 2 macros that you will need to modify.
+- {$ADO.PAT} for the Azure Personal Access token. **Keep it as "secret"**, so no one with access to Zabbix frontend can see the key.
+- {$ADO.PROJECT.URL} you have to specify the URL for your organization and project. https://dev.azure.com/{organization}/{project} (without the ending slash "/")
