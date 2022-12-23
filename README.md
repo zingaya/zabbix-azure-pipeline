@@ -8,7 +8,7 @@ The first thing to note, is that this pipeline is designed to be triggered after
 
 As I already stated in the [Worldcup 2026 Countdown](https://github.com/zingaya/worldcup2026), this pipeline uses an agent pool, where the agent is installed in the Zabbix server.
 
-Inside the YAML you will see that it does, in a single line BASH command, get the status of the pipelines builds (top 10) and send them using the zabbix-sender.\
+Inside the YAML you will see that it does, in a single line BASH command, get the status of the pipelines builds (top 10) and send them using the zabbix-sender.
 
 ## Zabbix
 
